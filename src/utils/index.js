@@ -12,7 +12,7 @@ export function parseTime(time, cFormat) {
   if (arguments.length === 0 || !time) {
     return null
   }
-  const format = cFormat || '{y}-{m}-{d} {h}:{i}:{s}'
+  const format = cFormat || '{y}-{m}-{d} {h}:{i}:{s}' // '{y}-{m}-{d} {h}:{i}:{s}'
   let date
   if (typeof time === 'object') {
     date = time
@@ -114,4 +114,35 @@ export function param2Obj(url) {
     }
   })
   return obj
+}
+
+export function formatDuration(seconds) {
+  if (seconds <= 60) {
+    return seconds + 's'
+  } else if (seconds <= 3600 && seconds > 60) {
+    let minute = Math.floor(seconds/60)
+    let realSeconds = seconds%60
+    return minute + 'm' + realSeconds + 's'
+  } else {
+    let hour = Math.floor(seconds/3600)
+    let minute = Math.floor(seconds%3600/60)
+    let realSeconds = seconds%60
+    return hour + 'h' + minute + 'm' + realSeconds + 's'
+  }
+}
+
+export function formatNums(num) {
+  const si = [
+    { value: 1, symbol: "" },
+    { value: 1E3, symbol: "K" },
+    { value: 1E6, symbol: "M" },
+  ]
+  const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
+  let i;
+  for (i = si.length - 1; i > 0; i--) {
+      if (num >= si[i].value) {
+          break;
+      }
+  }
+  return (num / si[i].value).toFixed(1).replace(rx, "$1") + si[i].symbol;
 }

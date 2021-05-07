@@ -1,6 +1,6 @@
 module.exports = {
 
-  title: 'Vue Admin Template',
+  title: 'TikTok Analytics - LingoDeer',
 
   /**
    * @type {boolean} true | false

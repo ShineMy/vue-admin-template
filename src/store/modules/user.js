@@ -1,13 +1,15 @@
-import { login, logout, getInfo } from '@/api/user'
-import { getToken, setToken, removeToken } from '@/utils/auth'
+import { getPublicKey, login, regist, getInfo } from '@/api/user'
+import { passwordEncrypt, getToken, setToken, removeToken } from '@/utils/auth'
 import { resetRouter } from '@/router'
+import firebase from 'firebase/app'
+import 'firebase/auth'
 
 const getDefaultState = () => {
   return {
     token: getToken(),
     name: '',
-    avatar: '',
-    roles: []
+    roles: [],
+    accounts: []
   }
 }
 
@@ -23,8 +25,8 @@ const mutations = {
   SET_NAME: (state, name) => {
     state.name = name
   },
-  SET_AVATAR: (state, avatar) => {
-    state.avatar = avatar
+  SET_ACCOUNTS: (state, accounts) => {
+    state.accounts = accounts
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
@@ -33,13 +35,40 @@ const mutations = {
 
 const actions = {
   // user login
-  login({ commit }, userInfo) {
+  async login({ commit }, userInfo) {
     const { username, password } = userInfo
+    const publicKey = await getPublicKey()
+    const passwordHash = passwordEncrypt(password, publicKey)
     return new Promise((resolve, reject) => {
-      login({ username: username.trim(), password: password }).then(response => {
-        const { data } = response
-        commit('SET_TOKEN', data.token)
-        setToken(data.token)
+      login({ username: username.trim(), password: passwordHash }).then(response => {
+        const { token } = response
+        return firebase.auth().signInWithCustomToken(token)
+      }).then(() => {
+        return firebase.auth().currentUser.getIdToken()
+      }).then((idToken) => {
+        commit('SET_TOKEN', idToken)
+        setToken(idToken)
+        resolve()
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
+  // user regist
+  async regist({ commit }, userInfo) {
+    const { username, password } = userInfo
+    const publicKey = await getPublicKey()
+    const passwordHash = passwordEncrypt(password, publicKey)
+    return new Promise((resolve, reject) => {
+      regist({ username: username.trim(), password: passwordHash }).then(response => {
+        const { token } = response
+        return firebase.auth().signInWithCustomToken(token)
+      }).then(() => {
+        return firebase.auth().currentUser.getIdToken()
+      }).then((idToken) => {
+        commit('SET_TOKEN', idToken)
+        setToken(idToken)
         resolve()
       }).catch(error => {
         reject(error)
@@ -57,7 +86,7 @@ const actions = {
           reject('Verification failed, please Login again.')
         }
 
-        const { roles, name, avatar } = data
+        const { roles, name, accounts } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
@@ -66,7 +95,7 @@ const actions = {
 
         commit('SET_ROLES', roles)
         commit('SET_NAME', name)
-        commit('SET_AVATAR', avatar)
+        commit('SET_ACCOUNTS', accounts)
         resolve(data)
       }).catch(error => {
         reject(error)
@@ -77,14 +106,10 @@ const actions = {
   // user logout
   logout({ commit, state }) {
     return new Promise((resolve, reject) => {
-      logout(state.token).then(() => {
-        removeToken() // must remove  token  first
-        resetRouter()
-        commit('RESET_STATE')
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
+      removeToken() // must remove  token  first
+      resetRouter()
+      commit('RESET_STATE')
+      resolve()
     })
   },
 

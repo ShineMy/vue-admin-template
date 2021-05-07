@@ -1,8 +1,23 @@
 import request from '@/utils/request'
 
+export function getPublicKey() {
+  return request({
+    url: '/getPublicKey',
+    method: 'get'
+  })
+}
+
 export function login(data) {
   return request({
-    url: '/vue-admin-template/user/login',
+    url: '/login',
+    method: 'post',
+    data
+  })
+}
+
+export function regist(data) {
+  return request({
+    url: '/regist',
     method: 'post',
     data
   })
@@ -10,15 +25,23 @@ export function login(data) {
 
 export function getInfo(token) {
   return request({
-    url: '/vue-admin-template/user/info',
+    url: '/getInfo',
     method: 'get',
     params: { token }
   })
 }
 
-export function logout() {
+export function getUserInfo(username) {
   return request({
-    url: '/vue-admin-template/user/logout',
-    method: 'post'
+    url: '/getUserInfo',
+    method: 'get',
+    params: { username }
   })
 }
+
+// export function logout() {
+//   return request({
+//     url: '/vue-admin-template/user/logout',
+//     method: 'post'
+//   })
+// }

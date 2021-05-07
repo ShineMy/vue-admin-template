@@ -1,9 +1,13 @@
 <template>
   <div class="login-container">
+    <div class="logo-container">
+      <img class="logoImg" src="@/assets/common/headLogo.png" alt="logo-Lingodeer">
+      <h1 class="logoTxt">TikTok Analytics</h1>
+    </div>
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
 
       <div class="title-container">
-        <h3 class="title">Login Form</h3>
+        <h3 class="title">{{ formTitle }}</h3>
       </div>
 
       <el-form-item prop="username">
@@ -13,7 +17,7 @@
         <el-input
           ref="username"
           v-model="loginForm.username"
-          placeholder="Username"
+          placeholder="用户名"
           name="username"
           type="text"
           tabindex="1"
@@ -30,7 +34,7 @@
           ref="password"
           v-model="loginForm.password"
           :type="passwordType"
-          placeholder="Password"
+          placeholder="密码"
           name="password"
           tabindex="2"
           auto-complete="on"
@@ -41,41 +45,47 @@
         </span>
       </el-form-item>
 
-      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
+      <el-form-item class="no-style">
+        <el-link :underline="false" type="primary" @click="changeMode">{{ formLink }}</el-link>
+        <el-checkbox v-model="loginForm.remember" class="remember">记住账号</el-checkbox>
+      </el-form-item>
 
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
+      <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">{{ formBtn }}</el-button>
 
     </el-form>
+    <div class="footer-container">
+      <p class="footerTxt">Copyright © 2021 LingoDeer. All Rights Reserved.</p>
+    </div>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import { validUsername, validPassword } from '@/utils/validate'
 
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
+      const validResult = validUsername(value)
+      if (validResult) {
+        callback(new Error(validResult))
       } else {
         callback()
       }
     }
     const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
+      const validResult = validPassword(value)
+      if (validResult) {
+        callback(new Error(validResult))
       } else {
         callback()
       }
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: '',
+        password: '',
+        remember: true
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -83,7 +93,11 @@ export default {
       },
       loading: false,
       passwordType: 'password',
-      redirect: undefined
+      redirect: undefined,
+      formTitle: '用户登录',
+      formLink: '用户注册',
+      formBtn: '登录',
+      mode: 'login'
     }
   },
   watch: {
@@ -94,7 +108,16 @@ export default {
       immediate: true
     }
   },
+  mounted() {
+    this.getUsername()
+  },
   methods: {
+    getUsername() {
+      const username = localStorage.getItem('username')
+      if (username) {
+        this.loginForm.username = username
+      }
+    },
     showPwd() {
       if (this.passwordType === 'password') {
         this.passwordType = ''
@@ -106,10 +129,17 @@ export default {
       })
     },
     handleLogin() {
+      if (this.loginForm.remember) {
+        localStorage.setItem('username', this.loginForm.username)
+      } else {
+        localStorage.removeItem('username')
+      }
+
       this.$refs.loginForm.validate(valid => {
         if (valid) {
+          const dispatchUrl = this.mode === 'login' ? 'user/login' : 'user/regist'
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
+          this.$store.dispatch(dispatchUrl, this.loginForm).then(() => {
             this.$router.push({ path: this.redirect || '/' })
             this.loading = false
           }).catch(() => {
@@ -120,6 +150,20 @@ export default {
           return false
         }
       })
+    },
+    changeMode() {
+      this.$refs.loginForm.resetFields()
+      if (this.mode === 'login') {
+        this.mode = 'regist'
+        this.formTitle = '用户注册'
+        this.formLink = '用户登录'
+        this.formBtn = '注册并登录'
+      } else if (this.mode === 'regist') {
+        this.mode = 'login'
+        this.formTitle = '用户登录'
+        this.formLink = '用户注册'
+        this.formBtn = '登录'
+      }
     }
   }
 }
@@ -168,6 +212,12 @@ $cursor: #fff;
     background: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     color: #454545;
+    &.no-style {
+      border: unset;
+      background: unset;
+      border-radius: unset;
+      color: unset;
+    }
   }
 }
 </style>
@@ -182,14 +232,53 @@ $light_gray:#eee;
   width: 100%;
   background-color: $bg;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+
+  .logo-container {
+    position: fixed;
+    left: 10px;
+    top: 10px;
+    height: 40px;
+    .logoImg {
+      float: left;
+      width: 40px;
+    }
+    .logoTxt {
+      float: left;
+      line-height: 50px;
+      margin: 0;
+      margin-left: 20px;
+      color: #fff;
+      font-size: 18px;
+      font-family: fantasy;
+      text-shadow: 0px 0px 8px #76a4dd;
+    }
+  }
+
+  .footer-container {
+    width: 100%;
+    text-align: center;
+    position: fixed;
+    bottom: 20px;
+    .footerTxt {
+      font-size: 14px;
+      color: white;
+      margin: 0;
+    }
+  }
 
   .login-form {
     position: relative;
     width: 520px;
     max-width: 100%;
-    padding: 160px 35px 0;
+    padding: 0 35px;
     margin: 0 auto;
     overflow: hidden;
+  }
+
+  .remember {
+    float: right;
   }
 
   .tips {

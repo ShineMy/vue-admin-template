@@ -1,7 +1,6 @@
 <template>
-  <div class="dashboard-container">
-    <div class="dashboard-text">name: {{ name }}</div>
-    <div class="dashboard-text">roles: <span v-for="role in roles" :key="role">{{ role }}</span></div>
+  <div class="usermanage-container">
+    <div class="userManage-text">this is userManage page</div>
   </div>
 </template>
 
@@ -9,7 +8,7 @@
 import { mapGetters } from 'vuex'
 
 export default {
-  name: 'Dashboard',
+  name: 'UserManage',
   computed: {
     ...mapGetters([
       'name',
@@ -20,7 +19,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.dashboard {
+.userManage {
   &-container {
     margin: 30px;
   }
