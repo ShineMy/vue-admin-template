@@ -24,6 +24,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { deleteWarning } from '@/api/user'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
 
@@ -35,10 +36,30 @@ export default {
   computed: {
     ...mapGetters([
       'sidebar',
-      'name'
+      'name',
+      'warning'
     ])
   },
+  created() {
+    this.init()
+  },
   methods: {
+    async init() {
+      if (this.warning) {
+        let warningList = this.warning
+        let user = this.name
+        for (let key in warningList) {
+          await this.$notify.error({
+              title: '错误',
+              message: warningList[key],
+              duration: 0,
+              onClose: async function() {
+                await deleteWarning({user, key})
+              }
+          });
+        }
+      }
+    },
     toggleSideBar() {
       this.$store.dispatch('app/toggleSideBar')
     },

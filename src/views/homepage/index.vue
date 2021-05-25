@@ -98,7 +98,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getUserInfo, deleteWarning } from '@/api/user'
+import { getUserInfo } from '@/api/user'
 import { Loading } from 'element-ui'
 import { formatNums } from '@/utils'
 import mainChart from './components/mainChart'
@@ -163,20 +163,6 @@ export default {
     },
     async initData() {
       let loadingInstance = Loading.service({ fullscreen: true })
-      if (this.warning) {
-        let warningList = this.warning
-        let user = this.name
-        for (let key in warningList) {
-          await this.$notify.error({
-              title: '错误',
-              message: warningList[key],
-              duration: 0,
-              onClose: async function() {
-                await deleteWarning({user, key})
-              }
-          });
-        }
-      }
       try {
         await this.$store.dispatch('account/getAccountsInfo', this.name)
         let userTotalInfo = await getUserInfo(this.name)
