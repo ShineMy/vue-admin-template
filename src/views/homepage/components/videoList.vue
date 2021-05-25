@@ -1,11 +1,23 @@
 <template>
   <div class="videoList" :style="{height, width}">
-    <div class="videoList-title">视频</div>
+    <div class="videoList-titleWrap">
+      <div class="videoList-title">视频</div>
+      <div class="">
+        <el-button-group>
+          <el-tooltip content="按照发布时间排序" placement="top">
+            <el-button type="warning" size="mini" @click="sort"><i class="el-icon-sort" style="font-weight:bold"></i></el-button>
+          </el-tooltip>
+          <el-tooltip content="全部视频的数据汇总" placement="top">
+            <el-button type="warning" size="mini" @click="showAll">All</el-button>
+          </el-tooltip>
+        </el-button-group>
+      </div>
+    </div>
     <div class="videoList-container" ref="videoWrap">
       <div class="defaultTips" v-if="tipsShow">当前账号暂无视频</div>
       <el-card class="box-card" :body-style="{ padding: '10px' }" shadow="hover" v-for="video in videoData" :key="video.title">
         <div class="videoList-item" @click="videoClickHandle(video)">
-          <div class="video-title">{{ video.title }}</div>
+          <div class="video-title" :title="video.title">{{ video.title }}</div>
           <div class="video-createTime">{{ video.createTime }}</div>
           <div class="video-duration">{{ formatDuration(video.duration) }}</div>
           <div class="video-total">
@@ -60,7 +72,13 @@
     data() {
       return {
         videoData: [],
-        tipsShow: false
+        tipsShow: false,
+        defaultDailyData: {
+          played: 0,
+          likes: 0,
+          comment: 0,
+          share: 0
+        }
       }
     },
     watch: {
@@ -81,7 +99,7 @@
             if (videoInfo) {
               let videoID = Object.keys(videoInfo)[0]
               let { title, createTime, duration, url, dailyData } = videoInfo[videoID]
-              let { played, likes, comment, share } = dailyData[Object.keys(dailyData)[Object.keys(dailyData).length - 1]]
+              let { played, likes, comment, share } = dailyData ? dailyData[Object.keys(dailyData)[Object.keys(dailyData).length - 1]] : this.defaultDailyData
               let videoData = { title, createTime, url, dailyData, duration, videoID, played, likes, comment, share }
               videosDataArr.push(videoData)
             }
@@ -94,6 +112,36 @@
           videoWrapLoading.close()
         })
       },
+      sort() {
+        this.videoData.sort(function(a, b) {
+          let timestamp_a = new Date(a.createTime).getTime()
+          let timestamp_b = new Date(b.createTime).getTime()
+          return timestamp_b - timestamp_a
+        })
+      },
+      showAll() {
+        let videoData = JSON.parse(JSON.stringify(this.videoData))
+        let allDailyData = {}
+        for (let i = 0; i < videoData.length; i ++) {
+          let dailyData = videoData[i].dailyData
+          for (let currentTime in dailyData) {
+            let currentDailyData = dailyData[currentTime]
+            if (!allDailyData[currentTime]) {
+              allDailyData[currentTime] = currentDailyData
+            } else {
+              allDailyData[currentTime].played += currentDailyData.played
+              allDailyData[currentTime].likes += currentDailyData.likes
+              allDailyData[currentTime].comment += currentDailyData.comment
+              allDailyData[currentTime].share += currentDailyData.share
+            }
+          }
+        }
+        let allVideoData = {
+          dailyData: allDailyData,
+          title: '全部视频'
+        }
+        this.$emit('change-video', allVideoData)
+      },
       videoClickHandle(video) {
         this.$emit('change-video', video)
       },
@@ -105,11 +153,16 @@
 
 <style lang="scss" scoped>
   .videoList {
-    &-title {
+    &-titleWrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       height: 30px;
-      font-size: 18px;
-      font-weight: bold;
       margin: 10px;
+      .videoList-title {
+        font-size: 18px;
+        font-weight: bold;
+      }
     }
     &-container {
       height: calc(100% - 50px);
@@ -138,6 +191,9 @@
             font-size: 18px;
             line-height: 26px;
             color: #303133;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
           .video-createTime {
             display: inline-block;

@@ -42,20 +42,29 @@
       </div>
     </el-card>
     <el-card class="box-card" style="margin-bottom: 30px">
-      <div slot="header" style="height:18px">
-        <el-dropdown placement="bottom" @command="changeAccount" style="float:left">
-          <span class="el-dropdown-link">
-            {{currentAccount}}<i class="el-icon-arrow-down el-icon--right"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item v-for="(account, i) in accountsInfoList" :key="i" :command="account">{{ Object.keys(account)[0] }}</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
+      <div class="mainChart-header" slot="header">
+        <div class="header-left">
+          <span style="float:left;font-size:14px">TikTok账号：</span>
+          <el-dropdown placement="bottom" @command="changeAccount" style="float:left">
+            <span class="el-dropdown-link">
+              {{currentAccount}}<i class="el-icon-arrow-down el-icon--right"></i>
+            </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item v-for="(account, i) in accountsInfoList" :key="i" :command="account">{{ Object.keys(account)[0] }}</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+        </div>
         <div class="videoTitle">{{currentVideo ? currentVideo.title : '&nbsp;'}}</div>
+        <div class="header-right">
+          <el-radio-group v-model="chartType" size="small">
+            <el-radio-button label="数据曲线"></el-radio-button>
+            <el-radio-button label="增量曲线"></el-radio-button>
+          </el-radio-group>
+        </div>
       </div>
       <div class="mainChart-container">
-        <main-chart class="mainChart" width="60%" :currentVideo="currentVideo" :currentFans="currentFans"/>
-        <video-list class="videolist" width="38%" :currentAccount="currentAccount" @change-video="changeVideo"/>
+        <main-chart width="60%" :currentVideo="currentVideo" :currentFans="currentFans" :chartType="chartType"/>
+        <video-list width="38%" :currentAccount="currentAccount" @change-video="changeVideo"/>
       </div>
     </el-card>
 
@@ -89,7 +98,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getUserInfo } from '@/api/user'
+import { getUserInfo, deleteWarning } from '@/api/user'
 import { Loading } from 'element-ui'
 import { formatNums } from '@/utils'
 import mainChart from './components/mainChart'
@@ -112,6 +121,7 @@ export default {
   data() {
     return {
       currentAccount: '账号选择',
+      chartType: '数据曲线',
       currentFans: {},
       currentVideo: null,
       videosInfoList: [],
@@ -133,11 +143,12 @@ export default {
     ...mapGetters([
       'name',
       'roles',
+      'warning',
       'accountsInfoList'
     ]),
     welcomeTxt() {
       const currentHour = new Date().getHours()
-      let welcomePrefix = ''
+      let welcomePrefix = '运营人员：'
       if (currentHour >= 0 && currentHour <= 12) {
         welcomePrefix = '上午好，'
       } else {
@@ -152,6 +163,20 @@ export default {
     },
     async initData() {
       let loadingInstance = Loading.service({ fullscreen: true })
+      if (this.warning) {
+        let warningList = this.warning
+        let user = this.name
+        for (let key in warningList) {
+          await this.$notify.error({
+              title: '错误',
+              message: warningList[key],
+              duration: 0,
+              onClose: async function() {
+                await deleteWarning({user, key})
+              }
+          });
+        }
+      }
       try {
         await this.$store.dispatch('account/getAccountsInfo', this.name)
         let userTotalInfo = await getUserInfo(this.name)
@@ -219,6 +244,19 @@ export default {
       text-align: center;
       font-size: 16px;
       font-weight: bold;
+    }
+    .mainChart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .header-left {
+        width: 240px;
+        text-align: left;
+      }
+      .header-right {
+        width: 240px;
+        text-align: right;
+      }
     }
     .mainChart-container {
       display: flex;

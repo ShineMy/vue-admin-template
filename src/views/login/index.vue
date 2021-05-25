@@ -140,8 +140,8 @@ export default {
           const dispatchUrl = this.mode === 'login' ? 'user/login' : 'user/regist'
           this.loading = true
           this.$store.dispatch(dispatchUrl, this.loginForm).then(() => {
+            this.$message.success('登录成功！')
             this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
           }).catch(() => {
             this.loading = false
           })

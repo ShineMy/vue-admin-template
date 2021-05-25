@@ -2,6 +2,7 @@
   <div class="videoManage-container">
     <el-card class="box-card">
       <div slot="header">
+        <span style="font-size:14px">TikTok账号：</span>
         <el-dropdown placement="bottom" @command="changeAccount">
           <span class="el-dropdown-link">
             {{currentAccount}}<i class="el-icon-arrow-down el-icon--right"></i>
@@ -117,6 +118,17 @@
             <el-input v-model="videoForm.title"></el-input>
           </el-form-item>
           <el-form-item label="视频链接" prop="url" required>
+            <label slot="label">
+              视频链接
+              <el-tooltip class="item" effect="dark" placement="bottom-start">
+                <div slot="content">
+                  格式必须为：https://www.tiktok.com/@account/video/videoID
+                  <br/>
+                  示例：https://www.tiktok.com/@lingodeer.app/video/6959546172788804870
+                </div>
+                <i class="el-icon-info"></i>
+              </el-tooltip>
+            </label>
             <el-input v-model="videoForm.url"></el-input>
           </el-form-item>
           <el-form-item label="视频时长(单位:s)" prop="duration" required>
@@ -178,6 +190,14 @@
   export default {
     name: 'VideoManage',
     data() {
+      let urlValidate = (rule, value, callback) => {
+        let reg = /^https:\/\/www.tiktok.com\/@[A-Za-z0-9.-_]+\/video\/[0-9]+$/;
+        if (reg.test(value)) {
+          callback()
+        } else {
+          callback(new Error('url格式错误'))
+        }
+      };
       return {
         currentAccount: '账号选择',
         tableLoading: false,
@@ -204,7 +224,8 @@
           createTime: [{ required: true, trigger: 'blur', message: '该字段不能为空' }],
           url: [
             { required: true, trigger: 'blur', message: '该字段不能为空' },
-            { type: 'url', trigger: 'blur', message: '请输入正确的url' }],
+            { type: 'url', trigger: 'blur', message: '请输入正确的url' },
+            { validator: urlValidate, trigger: 'blur' }],
           duration: [
             { required: true, trigger: 'blur', message: '该字段不能为空' },
             { type: 'number', trigger: 'blur', message: '请输入数字类型' }]
@@ -387,7 +408,7 @@
           if (valid) {
             this.btnLoading = true;
             try {
-              await updateVideo(Object.assign({videoID: this.videoID}, {videoInfo: this.videoForm}));
+              await updateVideo(Object.assign({videoID: this.videoID}, {videoInfo: this.videoForm, account: this.currentAccount}));
               this.$message.success('保存成功');
               this.btnLoading = false;
               await this.updateVideoList(this.currentAccount);

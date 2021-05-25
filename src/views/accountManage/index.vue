@@ -3,12 +3,12 @@
     <el-card class="box-card">
       <el-button type="primary" style="margin-bottom: 20px" @click="handleCreate">
         <svg-icon icon-class="add-account" class="add-account-icon" />
-        <span class="add-account-txt">添加账号</span>
+        <span class="add-account-txt">添加TikTok账号</span>
       </el-button>
 
       <el-table :data="accountsData" v-loading="tableLoading" border show-summary :summary-method="getSummaries" style="width: 100%">
         <el-table-column type="index" width="50" align="center"></el-table-column>
-        <el-table-column prop="name" label="账号"></el-table-column>
+        <el-table-column prop="name" label="TikTok账号"></el-table-column>
         <el-table-column prop="describe" label="简介"></el-table-column>
         <el-table-column label="粉丝" width="150">
           <template slot-scope="scope">

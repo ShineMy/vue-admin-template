@@ -1,10 +1,9 @@
 <template>
-  <div :style="{height, width}"></div>
+  <div class="mainChart" :style="{height, width}"></div>
 </template>
 
 <script>
   import * as echarts from 'echarts'
-  import { parseTime } from '@/utils'
 
   export default {
     props: {
@@ -15,6 +14,10 @@
       height: {
         type: String,
         default: '500px'
+      },
+      chartType: {
+        type: String,
+        default: '数据曲线'
       },
       currentVideo: {
         type: Object,
@@ -34,27 +37,63 @@
         chart: null,
         seriesData: [{
           name: '播放',
-          type: 'bar',
+          type: 'line',
+          showSymbol: false,
           data: []
         },
         {
           name: '点赞',
-          type: 'bar',
+          type: 'line',
+          showSymbol: false,
           data: []
         },
         {
           name: '评论',
-          type: 'bar',
+          type: 'line',
+          showSymbol: false,
           data: []
         },
         {
           name: '分享',
-          type: 'bar',
+          type: 'line',
+          showSymbol: false,
           data: []
         },
         {
           name: '粉丝',
           type: 'line',
+          showSymbol: false,
+          yAxisIndex: 1,
+          data: []
+        }],
+        diffData: [{
+          name: '播放',
+          type: 'line',
+          showSymbol: false,
+          data: []
+        },
+        {
+          name: '点赞',
+          type: 'line',
+          showSymbol: false,
+          data: []
+        },
+        {
+          name: '评论',
+          type: 'line',
+          showSymbol: false,
+          data: []
+        },
+        {
+          name: '分享',
+          type: 'line',
+          showSymbol: false,
+          data: []
+        },
+        {
+          name: '粉丝',
+          type: 'line',
+          showSymbol: false,
           yAxisIndex: 1,
           data: []
         }]
@@ -66,6 +105,15 @@
       })
     },
     watch: {
+      chartType: {
+        handler(newVal) {
+          if (newVal === '数据曲线') {
+            this.setOptions(this.seriesData)
+          } else if (newVal === '增量曲线') {
+            this.setOptions(this.diffData)
+          }
+        }
+      },
       currentVideo: {
         handler(video) {
           this.videoDataHandle(video)
@@ -80,12 +128,25 @@
       },
       seriesData: {
         handler(val) {
-          this.setOptions(val)
+          this.diffDataHandle(val)
+          if (this.chartType === '数据曲线') {
+            this.setOptions(this.seriesData)
+          } else if (this.chartType === '增量曲线') {
+            this.setOptions(this.diffData)
+          }
         },
         deep: true
       }
     },
     methods: {
+      sort(arr) {
+        arr.sort(function(a, b) {
+          let timestamp_a = new Date(a).getTime()
+          let timestamp_b = new Date(b).getTime()
+          return timestamp_a - timestamp_b
+        })
+        return arr
+      },
       videoDataHandle(video) {
         let videoData = {
           played: [],
@@ -95,38 +156,17 @@
         }
         if (video) {
           let daily = video.dailyData
-          for (let currentTime in daily) {
+          let dailyKeys = this.sort(Object.keys(daily))
+          for (let i = 0; i < dailyKeys.length; i ++) {
+            let currentTime = dailyKeys[i]
             let currentData = daily[currentTime]
-            videoData.played.push([parseTime(currentTime), currentData.played])
-            videoData.likes.push([parseTime(currentTime), currentData.likes])
-            videoData.comment.push([parseTime(currentTime), currentData.comment])
-            videoData.share.push([parseTime(currentTime), currentData.share])
+            videoData.played.push([currentTime, currentData.played])
+            videoData.likes.push([currentTime, currentData.likes])
+            videoData.comment.push([currentTime, currentData.comment])
+            videoData.share.push([currentTime, currentData.share])
           }
         }
-        // if (video) {
-        //   let daily = video.dailyData
-        //   let firstDay = Object.keys(daily)[0]
-        //   let oneDay = 24 * 3600 * 1000
-        //   let currentDate = new Date(parseTime(new Date())).getTime()
-        //   let now = new Date(firstDay).getTime()
-          
-        //   while(now <= currentDate) {
-        //     let nowDay = now
-        //     let nowDayData = daily[parseTime(nowDay)]
-        //     if (nowDayData) {
-        //       videoData.played.push([parseTime(nowDay), nowDayData.played])
-        //       videoData.likes.push([parseTime(nowDay), nowDayData.likes])
-        //       videoData.comment.push([parseTime(nowDay), nowDayData.comment])
-        //       videoData.share.push([parseTime(nowDay), nowDayData.share])
-        //     } else {
-        //       videoData.played.push([parseTime(nowDay), 0])
-        //       videoData.likes.push([parseTime(nowDay), 0])
-        //       videoData.comment.push([parseTime(nowDay), 0])
-        //       videoData.share.push([parseTime(nowDay), 0])
-        //     }
-        //     now = now + oneDay
-        //   }
-        // }
+        
         this.$set(this.seriesData[0], 'data', videoData.played)
         this.$set(this.seriesData[1], 'data', videoData.likes)
         this.$set(this.seriesData[2], 'data', videoData.comment)
@@ -142,6 +182,22 @@
         }
         this.$set(this.seriesData[4], 'data', fansData)
       },
+      diffDataHandle(seriesData) {
+        for (let i = 0; i < seriesData.length; i ++) {
+          let attrArr = seriesData[i].data;
+          let tempArr = [];
+          for (let j = 1; j < attrArr.length; j ++) {
+            let dailyData = attrArr[j];
+            let lastDailyData = attrArr[j - 1];
+            let currentTime = dailyData[0];
+            let currentData = dailyData[1];
+            let lastData = lastDailyData[1];
+            let diffData = currentData - lastData;
+            tempArr.push([currentTime, diffData]);
+          }
+          this.$set(this.diffData[i], 'data', tempArr);
+        }
+      },
       initChart() {
         this.chart = echarts.init(this.$el)
         this.setOptions(this.seriesData)
@@ -149,7 +205,7 @@
       setOptions(seriesData = []) {
         this.chart.setOption({
           title: {
-            text: '增长曲线',
+            text: this.chartType,
           },
           tooltip: {
             trigger: 'axis',
@@ -163,11 +219,7 @@
           legend: {
             data: ['播放', '点赞', '评论', '分享', '粉丝']
           },
-          grid: {
-            left: '3%',
-            right: '4%',
-            containLabel: true
-          },
+          
           toolbox: {
             feature: {
               magicType: {show: true, type: ['line', 'bar']},

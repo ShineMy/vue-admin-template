@@ -63,7 +63,7 @@ export const constantRoutes = [
         path: 'index',
         name: 'AccountManage',
         component: () => import('@/views/accountManage/index'),
-        meta: { title: '账号管理', icon: 'accountManage' }
+        meta: { title: 'TikTok账号管理', icon: 'accountManage' }
       }
     ]
   },

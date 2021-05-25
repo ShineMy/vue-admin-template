@@ -7,8 +7,10 @@
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
-          <img src="@/assets/common/defaultAvatar.png" class="user-avatar">
-          <!-- <i class="el-icon-caret-bottom" /> -->
+          <span style="font-size:14px">运营人员：</span>
+          <span class="username">{{name}}</span>
+          <!-- <img src="@/assets/common/defaultAvatar.png" class="user-avatar"> -->
+          <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
           <el-dropdown-item @click.native="logout">
@@ -32,7 +34,8 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'sidebar'
+      'sidebar',
+      'name'
     ])
   },
   methods: {
@@ -50,6 +53,7 @@ export default {
 <style lang="scss" scoped>
 .navbar {
   height: 50px;
+  padding-right: 30px;
   overflow: hidden;
   position: relative;
   background: #fff;
@@ -99,11 +103,18 @@ export default {
       }
     }
 
+    .username {
+      font-size: 16px;
+      font-weight: bold;
+      color: #FF8600;
+      cursor: pointer;
+    }
+
     .avatar-container {
-      margin-right: 20px;
+      margin-right: 12px;
 
       .avatar-wrapper {
-        margin-top: 5px;
+        // margin-top: 5px;
         position: relative;
 
         .user-avatar {
@@ -116,8 +127,7 @@ export default {
         .el-icon-caret-bottom {
           cursor: pointer;
           position: absolute;
-          right: -20px;
-          top: 13px;
+          top: 19px;
           font-size: 12px;
         }
       }

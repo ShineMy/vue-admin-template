@@ -39,9 +39,10 @@ export function getUserInfo(username) {
   })
 }
 
-// export function logout() {
-//   return request({
-//     url: '/vue-admin-template/user/logout',
-//     method: 'post'
-//   })
-// }
+export function deleteWarning(data) {
+  return request({
+    url: '/deleteWarning',
+    method: 'post',
+    data
+  })
+}
